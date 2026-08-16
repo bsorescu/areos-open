@@ -1,0 +1,22 @@
+name: contribution-lint
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # HIGH-2 fix: run the lint + allowlist from the BASE ref, never the PR's
+      # copy — a PR must not be able to neuter the script that guards it.
+      - name: Restore trusted lint from base
+        run: |
+          git checkout "origin/${{ github.base_ref }}" -- \
+            scripts/contribution-lint.py .github/allowed-domains.txt
+      - name: Layer-1 deterministic lint
+        env:
+          AREOS_LINT_ALLOW_AUTHORITY: ${{ contains(github.event.pull_request.labels.*.name, 'authority-ok') && '1' || '0' }}
+        run: python3 scripts/contribution-lint.py --base "origin/${{ github.base_ref }}"

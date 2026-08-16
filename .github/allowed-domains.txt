@@ -1,0 +1,12 @@
+# Domains permitted in added lines of contributions (contribution-lint L1).
+# Additions to this file are an authority-surface change (maintainer-only).
+github.com
+code.claude.com
+docs.claude.com
+anthropic.com
+www.anthropic.com
+agentskills.io
+obsidian.md
+pi.dev
+openrouter.ai
+artificialanalysis.ai
