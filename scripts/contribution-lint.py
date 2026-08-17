@@ -63,7 +63,7 @@ def frontmatter_range(path):
         return None
     if not lines or lines[0].strip() != "---":
         return None
-    for i in range(1, min(len(lines), 60)):
+    for i in range(1, len(lines)):
         if lines[i].strip() == "---":
             return (1, i + 1)
     return None
