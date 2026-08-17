@@ -24,10 +24,15 @@ from urllib.parse import urlsplit
 AUTHORITY_PREFIXES = ("CLAUDE.md", ".claude/", ".github/", "scripts/")
 CORPUS_DIR = "tests/injection-corpus/"
 
+# A YAML key may be quoted ("allowed-tools":) or bare (allowed-tools:) and
+# both parse to the same key, so an optional quote must not hide a grant.
 CAPABILITY_RE = re.compile(
-    r"^\s*(allowed-tools|hooks|context|agent|shell|paths)\s*:", re.I)
-DMI_FALSE_RE = re.compile(r"^\s*disable-model-invocation\s*:\s*false", re.I)
-DMI_TRUE_RE = re.compile(r"^\s*disable-model-invocation\s*:\s*true", re.I)
+    r"""^\s*["']?(allowed-tools|hooks|context|agent|shell|paths)["']?\s*:""",
+    re.I)
+DMI_FALSE_RE = re.compile(
+    r"""^\s*["']?disable-model-invocation["']?\s*:\s*false""", re.I)
+DMI_TRUE_RE = re.compile(
+    r"""^\s*["']?disable-model-invocation["']?\s*:\s*true""", re.I)
 INVISIBLE_RE = re.compile(
     "[\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\u00ad\ufeff]")
 SCHEME_URL_RE = re.compile(r"(?:https?:)?//([^\s/@]+@)?([A-Za-z0-9.\-]+)")
