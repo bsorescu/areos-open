@@ -24,10 +24,23 @@ from urllib.parse import urlsplit
 AUTHORITY_PREFIXES = ("CLAUDE.md", ".claude/", ".github/", "scripts/")
 CORPUS_DIR = "tests/injection-corpus/"
 
-CAPABILITY_RE = re.compile(
-    r"^\s*(allowed-tools|hooks|context|agent|shell|paths)\s*:", re.I)
-DMI_FALSE_RE = re.compile(r"^\s*disable-model-invocation\s*:\s*false", re.I)
-DMI_TRUE_RE = re.compile(r"^\s*disable-model-invocation\s*:\s*true", re.I)
+# Capability keys are matched by YAML shape, not one fixed line form: a key may
+# be quoted ("allowed-tools":) or live in a single-line flow mapping
+# ({..., allowed-tools: ...}), and both parse to the same top-level key. So the
+# block forms tolerate an optional quote, and flow mappings are scanned too.
+CAPABILITY_KEYS = ("allowed-tools", "hooks", "context", "agent", "shell", "paths")
+_CAP_ALT = "|".join(CAPABILITY_KEYS)
+CAPABILITY_RE = re.compile(r"^\s*[\"']?(" + _CAP_ALT + r")[\"']?\s*:", re.I)
+DMI_FALSE_RE = re.compile(
+    r"^\s*[\"']?disable-model-invocation[\"']?\s*:\s*false", re.I)
+DMI_TRUE_RE = re.compile(
+    r"^\s*[\"']?disable-model-invocation[\"']?\s*:\s*true", re.I)
+# A key inside a single-line flow mapping, i.e. preceded by its delimiter { or ,
+# and optionally quoted. Applied only to lines that open a flow mapping, so a
+# comma in ordinary prose cannot trigger it.
+FLOW_KEY_RE = re.compile(
+    r"[{,]\s*[\"']?(" + _CAP_ALT + r"|disable-model-invocation)[\"']?\s*:\s*([^,}]*)",
+    re.I)
 INVISIBLE_RE = re.compile(
     "[\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\u00ad\ufeff]")
 SCHEME_URL_RE = re.compile(r"(?:https?:)?//([^\s/@]+@)?([A-Za-z0-9.\-]+)")
@@ -63,7 +76,7 @@ def frontmatter_range(path):
         return None
     if not lines or lines[0].strip() != "---":
         return None
-    for i in range(1, min(len(lines), 60)):
+    for i in range(1, len(lines)):
         if lines[i].strip() == "---":
             return (1, i + 1)
     return None
@@ -89,6 +102,16 @@ def scan_content(path, n, line, fails, in_fm):
     if in_fm and DMI_FALSE_RE.match(line):
         fails.append(f"FAIL {path}:{n}: disable-model-invocation:false "
                      "(enables auto-invocation; maintainer-only)")
+    if in_fm and line.lstrip().startswith("{"):
+        for m in FLOW_KEY_RE.finditer(line):
+            key = m.group(1).lower()
+            if key in CAPABILITY_KEYS:
+                fails.append(f"FAIL {path}:{n}: capability '{key}' in flow "
+                             "mapping (maintainer-only)")
+            elif (key == "disable-model-invocation"
+                  and m.group(2).strip().strip("\"'").lower() == "false"):
+                fails.append(f"FAIL {path}:{n}: disable-model-invocation:false "
+                             "in flow mapping (maintainer-only)")
 
 def lint_diff(base):
     fails, authority = [], []
