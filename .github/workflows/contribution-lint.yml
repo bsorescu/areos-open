@@ -1,6 +1,11 @@
 name: contribution-lint
 on:
   pull_request:
+    # labeled/unlabeled included so applying (or removing) the `authority-ok`
+    # label re-runs CI with the new label state — GitHub's rerun replays the
+    # original event payload, so a label added after the first run is otherwise
+    # invisible until a new push (learned on PR #4, 2026-08-18).
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 permissions:
   contents: read
 jobs:
