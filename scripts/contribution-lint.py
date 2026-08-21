@@ -22,7 +22,17 @@ import sys
 from urllib.parse import urlsplit
 
 AUTHORITY_PREFIXES = ("CLAUDE.md", ".claude/", ".github/", "scripts/")
+# Files loaded as authority by name at ANY depth, not just root: the harness
+# reads CLAUDE.md from subdirectories, and .mcp.json registers MCP servers
+# (a tool grant). A prefix match on root alone misses "docs/CLAUDE.md" and
+# ".mcp.json".
+AUTHORITY_BASENAMES = ("CLAUDE.md", ".mcp.json")
 CORPUS_DIR = "tests/injection-corpus/"
+
+
+def is_authority(path):
+    return (path.startswith(AUTHORITY_PREFIXES)
+            or path.rsplit("/", 1)[-1] in AUTHORITY_BASENAMES)
 
 # Capability keys are matched by YAML shape, not one fixed line form: a key may
 # be quoted ("allowed-tools":) or live in a single-line flow mapping
@@ -31,6 +41,12 @@ CORPUS_DIR = "tests/injection-corpus/"
 CAPABILITY_KEYS = ("allowed-tools", "hooks", "context", "agent", "shell", "paths")
 _CAP_ALT = "|".join(CAPABILITY_KEYS)
 CAPABILITY_RE = re.compile(r"^\s*[\"']?(" + _CAP_ALT + r")[\"']?\s*:", re.I)
+# YAML explicit-key form: "? allowed-tools" on one line, ": [...]" on the next,
+# parses to the same top-level key but has no trailing ':' for CAPABILITY_RE to
+# match. Flag the '? <cap-key>' line; the explicit-key shape for a capability
+# key in frontmatter is itself anomalous.
+EXPLICIT_KEY_RE = re.compile(
+    r"^\s*\?\s*[\"']?(" + _CAP_ALT + r"|disable-model-invocation)\b", re.I)
 DMI_FALSE_RE = re.compile(
     r"^\s*[\"']?disable-model-invocation[\"']?\s*:\s*false", re.I)
 DMI_TRUE_RE = re.compile(
@@ -42,8 +58,14 @@ FLOW_KEY_RE = re.compile(
     r"[{,]\s*[\"']?(" + _CAP_ALT + r"|disable-model-invocation)[\"']?\s*:\s*([^,}]*)",
     re.I)
 INVISIBLE_RE = re.compile(
-    "[\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\u00ad\ufeff]")
+    "[\u00ad\u180e\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069"
+    "\ufe00-\ufe0f\ufeff]"           # soft hyphen, MVS, zero-width/bidi, VS
+    "|[\U000e0000-\U000e007f]")      # Unicode tag block (hidden-ASCII smuggling)
 SCHEME_URL_RE = re.compile(r"(?:https?:)?//([^\s/@]+@)?([A-Za-z0-9.\-]+)")
+# A bare IPv4 endpoint with a path (no scheme): domains route through the
+# allowlist, but an IP is never allowlistable and BARE_DOMAIN_RE excludes a
+# numeric final label, so a scheme-less "1.2.3.4/collect" would otherwise slip.
+IPV4_PATH_RE = re.compile(r"\b((?:\d{1,3}\.){3}\d{1,3})(?::\d+)?/[A-Za-z0-9]")
 BARE_DOMAIN_RE = re.compile(
     r"\b([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
     r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*"
@@ -77,9 +99,17 @@ def frontmatter_range(path):
     if not lines or lines[0].strip() != "---":
         return None
     for i in range(1, len(lines)):
+        # Only a real '---' closes the frontmatter. A YAML '...' document-end is
+        # deliberately NOT treated as a close: doing so fails open — a capability
+        # grant placed after a '...' but before a later '---' would fall outside
+        # the range and escape the in-frontmatter check. Skipping '...' keeps such
+        # a grant inside the range; an unterminated fence still fails closed below.
         if lines[i].strip() == "---":
             return (1, i + 1)
-    return None
+    # Opened with '---' but never terminated. Fail CLOSED: scan the whole file
+    # as frontmatter rather than returning None (which would silently disable
+    # every capability check on the file).
+    return (1, len(lines))
 
 def scan_content(path, n, line, fails, in_fm):
     if path.startswith(CORPUS_DIR):
@@ -96,9 +126,15 @@ def scan_content(path, n, line, fails, in_fm):
         host = m.group(1)
         if not domain_ok(host):
             fails.append(f"FAIL {path}:{n}: domain '{host}' not allowlisted")
+    for m in IPV4_PATH_RE.finditer(line):
+        fails.append(f"FAIL {path}:{n}: bare IP endpoint "
+                     f"'{m.group(1)}' (exfil shape; IPs are never allowlisted)")
     if in_fm and CAPABILITY_RE.match(line):
         fails.append(f"FAIL {path}:{n}: capability frontmatter "
                      f"'{line.strip()[:40]}' (maintainer-only)")
+    if in_fm and EXPLICIT_KEY_RE.match(line):
+        fails.append(f"FAIL {path}:{n}: capability key in YAML explicit-key "
+                     f"form '{line.strip()[:40]}' (maintainer-only)")
     if in_fm and DMI_FALSE_RE.match(line):
         fails.append(f"FAIL {path}:{n}: disable-model-invocation:false "
                      "(enables auto-invocation; maintainer-only)")
@@ -129,7 +165,7 @@ def lint_diff(base):
         if raw.startswith("+++ b/"):
             path = raw[6:]
             added.setdefault(path, [])
-            if path.startswith(AUTHORITY_PREFIXES):
+            if is_authority(path):
                 authority.append(path)
             continue
         if raw.startswith("Binary files") and " differ" in raw:
