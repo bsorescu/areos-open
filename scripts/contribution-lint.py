@@ -99,10 +99,12 @@ def frontmatter_range(path):
     if not lines or lines[0].strip() != "---":
         return None
     for i in range(1, len(lines)):
-        # '...' is a valid YAML document-end terminator that frontmatter
-        # parsers accept; treat it as a close too, else a grant hidden behind
-        # a '...' close would leave the range unfound.
-        if lines[i].strip() in ("---", "..."):
+        # Only a real '---' closes the frontmatter. A YAML '...' document-end is
+        # deliberately NOT treated as a close: doing so fails open — a capability
+        # grant placed after a '...' but before a later '---' would fall outside
+        # the range and escape the in-frontmatter check. Skipping '...' keeps such
+        # a grant inside the range; an unterminated fence still fails closed below.
+        if lines[i].strip() == "---":
             return (1, i + 1)
     # Opened with '---' but never terminated. Fail CLOSED: scan the whole file
     # as frontmatter rather than returning None (which would silently disable
