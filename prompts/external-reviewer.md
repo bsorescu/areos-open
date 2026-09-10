@@ -29,6 +29,13 @@ Review it in four passes and report findings per pass:
 4. **Skeptic's attack.** The single strongest argument that this decision
    is wrong, argued honestly at full strength — not a strawman.
 
+**Empirical mandate (4 sessions, tier-independent):** where the artifact
+makes a checkable claim about code or a live system, RUN it — apply the
+patch, execute the probe, reproduce the failure, revert-to-green the test —
+rather than reasoning from the diff. A reviewer that runs finds what a
+reviewer that reads cannot. Name the lens you are applying ("verifying
+interactions with X"); unnamed classes escape.
+
 End with a verdict: SOUND / SOUND WITH RESERVATIONS / UNSOUND, one sentence
 of justification, and the top 3 changes that would most improve the
 artifact. Do not soften findings for politeness; unsupported praise is

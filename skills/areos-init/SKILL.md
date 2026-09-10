@@ -18,10 +18,12 @@ an existing file — report it and skip. Announce: "Using areos-init for
   already belongs to this repo (similar name, or referenced from the repo's
   CLAUDE.md) — if yes, propose THAT as the slug instead. Creating a parallel
   vault folder for an already-tracked project is the failure mode to avoid
-  (precedent: smartlife, reverted; near-miss: homelab-configs → `homelab`,
-  audit 2026-08-03). When slug ≠ repo basename, write it to
+  (precedent: a unilateral split that had to be reverted; near-miss: a repo
+  named `<project>-configs` almost got a parallel vault next to `<project>`). When slug ≠ repo basename, write it to
   `$REPO/.claude/areos-project` (single line) — the hooks read it.
-- `AREOS` = ~/Development/AREOS (canonical source of hook scripts).
+- `AREOS` = the directory this skill lives in, two levels up from this
+  file (`$(dirname "$0")/../..` from `skills/areos-init/`) — never a
+  hardcoded path; the kernel may be cloned anywhere.
 
 ## Steps
 
@@ -63,8 +65,11 @@ Known Issues / Arhitectură (pointers). No frontmatter, no narrative.
 
 Add the bootstrap to the project's first session note (or current-state
 Recently Shipped): "Proiect pus pe AREOS (areos-init) → hooks + CLAUDE.md +
-vault skeleton". The project inherits the global tracking rule from
-`~/.claude/rules/obsidian-project-tracking.md` — do not copy it.
+vault skeleton". The project inherits the always-on vault tracking rule
+from `~/.claude/rules/` — do not copy it per project. If no tracking rule is
+installed yet, install the kernel's copy once: `cp $AREOS/templates/vault-tracking-rule.md
+~/.claude/rules/vault-tracking.md` (and read `$AREOS/templates/frontmatter-schemas.md` when
+creating ADRs/plans/session notes — chain-lint validates that schema).
 
 ## Out of scope
 

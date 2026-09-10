@@ -25,7 +25,7 @@ if [ ! -e "$marker" ]; then
   vault_dirty=$(git -C "${AREOS_VAULT_ROOT:-$HOME/Documents/obsidian-claude}" status --porcelain -- "$SLUG/" 2>/dev/null | head -1)
   if [ -n "$repo_dirty" ] || [ -n "$vault_dirty" ]; then
     touch "$marker"
-    reminder="AREOS ($SLUG): uncommitted changes exist (repo and/or vault $SLUG/). Run the end-of-session checklist from ~/.claude/rules/obsidian-project-tracking.md before the session ends. (Reminder fires once per session.)"
+    reminder="AREOS ($SLUG): uncommitted changes exist (repo and/or vault $SLUG/). Run the end-of-session checklist from the vault tracking rule (~/.claude/rules/) before the session ends. (Reminder fires once per session.)"
   fi
 fi
 

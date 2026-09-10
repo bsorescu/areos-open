@@ -30,24 +30,52 @@ harness actually loads at runtime. A rule that isn't executable is an opinion.
 | `.claude/hooks/` | Session lifecycle: context injection at start, checklist reminder at stop, `chain-lint` verification |
 | `prompts/` | Dispatch prompts for fresh-context subagent roles (adversarial reviewer, adherence auditor) |
 | `handbook/` | One chapter per validated skill: why it exists, what shaped it, what was rejected |
+| `templates/` | Frontmatter schemas for ADRs, plans, session notes (what `chain-lint` validates) |
+| `examples/` | A real, completed fast-path research run, so you can see the output shape |
 | `scripts/` | Contribution lint (CI), publish tooling |
 | `tests/injection-corpus/` | Seeded attack samples used to validate the security layers (see SECURITY.md) |
 
-## Install
+## Prerequisites
 
-Skills are installed by symlink into your Claude Code skills directory:
+- **Claude Code** (skills, rules, hooks are its native mechanisms).
+- **[superpowers](https://github.com/obra/superpowers)** — AREOS owns the
+  research and bootstrap stages; brainstorming, planning, TDD and review are
+  delegated to that suite (see `.claude/rules/methodology-precedence.md`
+  for how the two compose). Not vendored; install it separately.
+- An **Obsidian vault** (or any folder of markdown) for project memory —
+  default `~/Documents/obsidian-claude`, override with `AREOS_VAULT_ROOT`.
+- Optional, referenced by `research-methodology`: Context7 (library docs),
+  a deep-research skill, and the `claude-code-guide` agent. The skill works
+  without them; it names them as preferred sources.
+
+## Quickstart (15 minutes)
 
 ```bash
-ln -sfn "$PWD/skills/research-methodology" ~/.claude/skills/research-methodology
+git clone https://github.com/bsorescu/areos-open.git && cd areos-open
+
+# 1. Skills: symlink into Claude Code (each is one directory)
+for s in research-methodology areos-init; do
+  ln -sfn "$PWD/skills/$s" ~/.claude/skills/$s
+done
+
+# 2. Always-on vault tracking rule (the memory discipline; Romanian for now)
+cp templates/vault-tracking-rule.md ~/.claude/rules/vault-tracking.md
+
+# 3. Put a project on AREOS: open Claude Code in that repo and run
+#    /areos-init   -> vault skeleton, project CLAUDE.md, hooks, chain-lint
 ```
 
-Hooks are copied verbatim into a project's `.claude/hooks/` — they derive the
-project slug at runtime (see `skills/areos-init/SKILL.md` for the full
-bootstrap). The vault root defaults to `~/Documents/obsidian-claude` and can
-be overridden with `AREOS_VAULT_ROOT`.
+Then, in that project, ask Claude "what should we use for X?" — the
+`research-methodology` skill triggers, and the report lands in
+`<vault>/<project>/research/`. Frontmatter for ADRs/plans/sessions is in
+`templates/frontmatter-schemas.md`; `chain-lint` (run by the session hooks)
+validates it and the research → decision chain.
 
-Handbook chapters are currently in Romanian (the project's working language);
-translations are a welcome first contribution.
+Hooks are copied verbatim into a project's `.claude/hooks/` — they derive the
+project slug at runtime, so the kernel can be cloned anywhere.
+
+Handbook chapters and the tracking rule are currently in Romanian (the
+project's working language); translations are a welcome first contribution.
 
 ## Contributing
 

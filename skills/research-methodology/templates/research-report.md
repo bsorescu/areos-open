@@ -32,7 +32,9 @@ metrics: record as `value @ read-date`; divergent reads → interval.}
 
 ## 3. Candidates evaluated
 
-{One technology-evaluation grid per candidate — inline or linked.}
+{One technology-evaluation grid per candidate — inline or linked. For 6+
+candidates: one aggregated criteria × candidates grid in an annex, per-
+candidate grids only for the shortlist.}
 
 ## 4. Comparison
 
@@ -61,8 +63,12 @@ never "do Y".
 
 ## 4.5 Completeness critique
 
-{Rounds run: N. What the critic caught and how it was addressed; "nothing
-material" for the final round.}
+| Round | What the critic caught | Resolution |
+|---|---|---|
+| 1 | {pasted from the subagent's output — never pre-written} | {fixed in §N / rejected because …} |
+
+{Input given to the critic: draft + §4 verdict table + access to {repo/probes}.
+Final round recorded only AFTER it ran.}
 
 ## 5. Recommendation
 

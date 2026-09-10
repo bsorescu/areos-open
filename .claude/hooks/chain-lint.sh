@@ -10,7 +10,7 @@ SLUG=$(cat "$REPO/.claude/areos-project" 2>/dev/null || basename "$REPO" | tr 'A
 VAULT="${AREOS_VAULT_ROOT:-$HOME/Documents/obsidian-claude}/$SLUG"
 CS="$VAULT/context/$SLUG/current-state.md"
 if [ ! -d "$VAULT" ]; then
-  # Silent exit here once hid a misconfigured project for weeks (homelab,
+  # Silent exit here once hid a misconfigured project for weeks (a client project,
   # 2026-08-03): hooks installed = the project claims AREOS tracking, so a
   # missing vault folder is a defect, not a non-AREOS repo.
   echo "WARN vault folder missing for slug '$SLUG' ($VAULT) — repo name != vault folder? Set the slug in .claude/areos-project"
@@ -21,7 +21,7 @@ fi
 # Three states, never collapsed: missing / unreadable / checked. Under macOS TCC
 # stat() is allowed while open() is denied, so the old `[ -f ]` branch ran with
 # every read failing: the size check fell through silently and grep reported
-# "missing header" — a content verdict on a file nobody could read (aqos-platform,
+# "missing header" — a content verdict on a file nobody could read (a client project,
 # 2026-08-06..08, two days of a false WARN). Unreadable is NOT clean.
 if [ ! -f "$CS" ]; then
   echo "FAIL current-state.md missing at $CS"

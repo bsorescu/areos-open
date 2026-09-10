@@ -27,14 +27,17 @@ When the decision is trivially reversible AND low-cost (e.g. picking a dev
 dependency), say so explicitly and propose the fast path below. Never skip
 silently.
 
-### Fast path (small decisions) — validate on first real use
+### Fast path (small decisions)
 
-For reversible, low-cost decisions only, with the user's explicit OK:
+For reversible, low-cost decisions only. Announce "fast path" and proceed
+unless the user objects (a blocking question stalls a direct request).
 1. Frame in two lines (decision + top criterion).
-2. Check at most 5 sources (official docs first; Context7 for libraries).
+2. Evaluate at most ~5 candidates, primary sources only (official docs
+   first; Context7 for libraries).
 3. In-chat mini-comparison (one short table), recommend, note rejected options.
-4. Record the outcome in the session note — no standalone report, no ADR
-   unless the decision later proves architectural.
+4. Record the outcome in the session note. The fast path bounds research
+   DEPTH, not decision ceremony: whether the result also becomes an ADR or
+   report is the user's call, not the path's.
 
 If during the fast path a hard constraint or a contradiction between sources
 appears, STOP and escalate to the full 5-step process.
@@ -47,6 +50,9 @@ WRITE DOWN before searching:
 - The decision this research informs (one sentence)
 - Decision criteria, ranked (e.g. maturity, cost, fit with existing stack)
 - Hard constraints (budget, licenses, platform, timeline)
+- ASK the user before any fan-out: (a) is this scope right? (b) which
+  primary documents, data, or measurements do you already hold? Owner-held
+  sources beat a public sweep and are invisible to it.
 
 ### Step 2 — Discover sources (actively)
 
@@ -55,8 +61,19 @@ Do NOT assume any initial list is complete. Sweep at least 3 modalities:
 - Official documentation (via Context7 when it's a library/framework)
 - Industry practice (engineering blogs, papers, conference talks — WebSearch,
   deep-research skill for large sweeps)
+- Empirical probes against live systems / local measurement (call an API,
+  run the tool, time it). Where the decisive criterion is measurable
+  locally, a measured number outranks any cited one.
 
 Record every source consulted, including dead ends (they prove coverage).
+
+**When a source is unreachable, a fetch failure is not a dead end until this
+ladder is exhausted:** (1) JS/WAF-fronted site → the project's raw repo files
+or its API via curl; (2) PDF that won't fetch → download it and extract text
+locally, or Read the saved file; (3) CAPTCHA'd portal → the user's real
+browser (claude-in-chrome) early, not as a last resort; (4) harness without
+web tools → GitHub API via curl. Only then record "dead end" in §2.
+Site-specific workarounds go in `references/source-access.md`, not here.
 
 **Data hygiene for volatile metrics:** adoption numbers (GitHub stars, npm
 downloads, contributor counts) drift between reads — record each as
@@ -69,12 +86,16 @@ Every candidate goes through the SAME grid — use
 `templates/technology-evaluation.md`. No candidate gets a pass on a criterion
 because it's the favorite.
 
-For structure/process decisions (restructuring, ownership, workflow design)
-the candidates are usually mechanisms per cluster, not comparable
-technologies: keep the discipline (same criteria for every option), drop the
-technology-specific rows (license, maintenance), and evaluate options
-per cluster instead of forcing one global grid. State in the report which
-grid variant was used.
+For non-technology decisions (structure, process, business lines, internal
+evaluation) the candidates are usually mechanisms per cluster, not
+comparable technologies: keep the discipline (same criteria for every
+option), drop the technology-specific rows (license, maintenance), and
+evaluate options per cluster instead of forcing one global grid. State in
+the report which grid variant was used.
+
+For 6+ candidates: one aggregated grid (criteria × candidates) in an annex,
+per-candidate grids only for the shortlist — same rows for all (mirrors the
+§2 convention for large source sweeps).
 
 ### Step 4 — Compare with evidence
 
@@ -89,6 +110,13 @@ the actual repo/artifact — not blog posts citing blog posts). Record verdict
 (confirmed / refuted / unresolved) plus the primary-source evidence in the
 report. An unresolved load-bearing claim goes to "Open questions" and cannot
 silently support the recommendation.
+
+Write each load-bearing claim falsifiably before handing it to a verifier:
+enumerate the criteria, name the exact metric (commits on `main`, not
+contributor count), pin the source's version/form and read-date. Any legal
+or numeric figure taken from a portal that serves multiple versions of the
+same document is load-bearing by default. An agent's own "verified" or
+"read in full" label is a claim, not evidence.
 
 Sampling (verifying a subset of claims) is triage, not verification. If a
 sampled check finds ANY error, or if the research feeds an execution plan,
@@ -130,9 +158,22 @@ Specifically:
 - when the change touches a shared field or artifact: who READS it, not only
   who writes it — a producer-side sweep reads as complete while missing consumers.
 
+Critic input = the draft PLUS the Step 4 verdict table (default: run after
+Step 4, or it re-opens claims already closed). Running the critic in
+parallel with verifiers is allowed only when its brief explicitly excludes
+the claims under verification. Give the critic the same access the
+researcher had (repo, live probes) — a critic that can run probes finds
+what a critic that only reads cannot.
+
 Feed findings back into Steps 2–4. Repeat until the critic returns nothing
-material (typically 1–2 rounds). Note in the report that the critique ran and
-what it caught.
+material (typically 1–2 rounds). Round verdicts are pasted from the
+subagent's output, never pre-written — the report records what each round
+caught and how it was resolved.
+
+If subagents are unavailable in this session: ask the user once whether to
+lift the restriction for verification and critique; if not, run them
+in-context and label the verdicts `non-independent` in §4/§4.5 — never
+present them as independent.
 
 ### Step 5 — Recommend
 

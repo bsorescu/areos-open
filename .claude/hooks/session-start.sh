@@ -40,4 +40,11 @@ if [ -n "$lint" ]; then
   echo "### chain-lint (fix FAILs before new work)"
   echo "$lint"
 fi
+
+# Kernel sessions only: surface client friction the kernel has not harvested
+# yet (the growth loop broke at harvesting — gap review 2026-09-10).
+if [ "$SLUG" = "areos" ] && [ "$1" != "--brief" ]; then
+  harvest=$("$REPO/.claude/hooks/harvest-friction.sh" 2>/dev/null)
+  [ -n "$harvest" ] && echo && echo "$harvest"
+fi
 exit 0
