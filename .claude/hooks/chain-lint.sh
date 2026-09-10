@@ -75,5 +75,21 @@ for a in "$VAULT"/decisions/*.md; do
     "")
       echo "WARN ADR $base: no status field" ;;
   esac
+  # --- ADR -> research traceability (gap review 2026-09-10): an accepted/
+  # implemented ADR must link the research that informed it, or carry an
+  # explicit waiver. Only for ADRs dated on/after the project's first session
+  # note (older ones predate the methodology; noise trains people to ignore
+  # the lint). README claims chain-lint checks this chain; now it does.
+  case "$st" in
+    accepted|implemented)
+      # portable: macOS sed lacks \| alternation — use grep -oE
+      adr_date=$(grep -oE '^date_(proposed|accepted):[[:space:]]*[0-9]{4}-[0-9]{2}-[0-9]{2}' "$a" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1)
+      first_session=$(/bin/ls "$VAULT"/sessions/ 2>/dev/null | grep -oE '^[0-9]{4}-[0-9]{2}-[0-9]{2}' | sort | head -1)
+      if [ -n "$adr_date" ] && [ -n "$first_session" ] && [ ! "$adr_date" \< "$first_session" ]; then
+        if ! grep -qiE '\[\[20[0-9]{2}-[0-9]{2}-[0-9]{2}|research/|research-waiver:|fast[- ]path|decizie (PO|user)|PO decision' "$a"; then
+          echo "WARN ADR $base: accepted/implemented with no research link and no waiver (add [[research-note]] or 'research-waiver: <reason>')"
+        fi
+      fi ;;
+  esac
 done
 exit 0

@@ -23,4 +23,3 @@ are NOT duplicated here. This library owns only standalone roles.
 | Prompt | Role | Status |
 |---|---|---|
 | `external-reviewer.md` | Adversarial review of an AREOS artifact by a fresh-context subagent | validated 2026-07-05 (kernel audit, methodology lens) |
-| `adherence-auditor.md` | Detects silent methodology skips over a window of sessions (kernel-audit mechanism, finding 3) | validate on first real use |
