@@ -19,6 +19,15 @@ the review will ask for exactly what the methodology would have produced.
 4. **One instruction = one mechanism.** Don't restate an instruction that
    another file owns — link to it. Duplication is drift waiting to happen.
 
+## Where to start
+
+Issues labeled **`good-first-friction`** are real, logged frictions with the
+methodology, each a concrete iteration target: the friction is quoted, the
+proposed change is small, and the acceptance test is RED/GREEN on a real
+session of yours. Most are single-session observations that are *not yet
+earned* under rule 1 — your second session is what earns them. Pick one,
+run the skill on a real decision, and bring the evidence.
+
 ## What you can and can't touch
 
 - **Open to contribution:** skill bodies, references, templates, handbook
